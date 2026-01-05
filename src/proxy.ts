@@ -1,45 +1,44 @@
 import { NextRequest, NextResponse } from "next/server";
-
 import { nanoid } from "nanoid";
 import { redis } from "./lib/redis";
 
-export const proxy = async (req: NextRequest, res: NextResponse) => {
+export const proxy = async (req: NextRequest) => {
   const pathname = req.nextUrl.pathname;
-  const roomMatch = pathname.match(/^\/room\/([^/]+)$/) ?? "";
+  const match = pathname.match(/^\/room\/([^/]+)$/);
+  const roomID = match?.[1];
 
-  const roomID = roomMatch[1];
   if (!roomID) return NextResponse.redirect(new URL("/", req.url));
 
-  const meta = await redis.hgetall<{
-    connectedUsers: string[];
-    createdAt: number;
-  }>(`meta:${roomID}`);
+  const meta = await redis.hgetall(`meta:${roomID}`);
+  if (!meta) return NextResponse.redirect(new URL("/?error=room-not-found", req.url));
 
-  if (!meta) {
-    return NextResponse.redirect(new URL("/?error=room-not-found", req.url));
-  }
+  const token = req.cookies.get("x-auth-token")?.value;
 
-  const exisitngToken = req.cookies.get("x-auth-token")?.value;
-  if (exisitngToken && meta.connectedUsers.includes(exisitngToken)) {
+  // check if token already connected
+  if (token && (await redis.sismember(`connected:${roomID}`, token))) {
     return NextResponse.next();
   }
 
-  if (meta.connectedUsers.length >= 2) {
+  // generate new token
+  const newToken = nanoid();
+
+  // atomically add token to the set
+  const added = await redis.sadd(`connected:${roomID}`, newToken);
+
+  const count = await redis.scard(`connected:${roomID}`);
+  if (count > 2) {
+    // room full → remove the token we just added
+    await redis.srem(`connected:${roomID}`, newToken);
     return NextResponse.redirect(new URL("/?error=room-full", req.url));
   }
 
+  // set token cookie
   const response = NextResponse.next();
-
-  const token = nanoid();
-  response.cookies.set("x-auth-token", token, {
+  response.cookies.set("x-auth-token", newToken, {
     httpOnly: true,
     path: "/",
     sameSite: "strict",
     secure: process.env.NODE_ENV === "production",
-  });
-
-  await redis.hset(`meta:${roomID}`, {
-    connectedUsers: [...meta.connectedUsers, token],
   });
 
   return response;
