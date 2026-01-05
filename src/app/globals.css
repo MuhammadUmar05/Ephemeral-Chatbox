@@ -19,6 +19,17 @@
   }
 }
 
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
@@ -26,7 +37,7 @@ body {
 }
 
 @media (max-width: 650px) {
-  
+
   body {
     background: var(--background);
     color: var(--foreground);
@@ -38,20 +49,6 @@ body {
     background-size: cover;
   }
 }
-
-/* @media (max-width: 650px) {
-
-  .background-image {
-    background-image: url("/image.png");
-    background-position: center;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-    background-size: cover;
-    height: "100%";
-    width: "100%";
-  }
-
-} */
 
 .backdrop {
   backdrop-filter: blur(10px);

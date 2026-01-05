@@ -123,7 +123,7 @@ function page() {
   });
 
   return (
-    <main className="flex flex-col h-screen max-h-screen overflow-hidden background-image">
+    <main className="relative flex flex-col h-screen max-h-screen overflow-hidden background-image">
       <header className="backdrop border-b border-zinc-800 p-4 flex items-center justify-between bg-zinc-900/30">
         <div className="flex items-center gap-4">
           <div className="flex flex-col">
@@ -148,7 +148,7 @@ function page() {
             <p
               className={`text-sm font-bold flex items-center gap-2 ${
                 timeRemaining !== null && timeRemaining < 90
-                  ? "text-red-500"
+                  ? "text-red-500 animate-pulse"
                   : "text-amber-500"
               }`}
             >
@@ -165,7 +165,7 @@ function page() {
           <span className="group-hover:animate-pulse">💣</span> DESTROY NOW
         </button>
       </header>
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin">
+      <div className="flex-1 overflow-y-auto p-4 mb-16 space-y-4 no-scrollbar">
         {messages.length === 0 && (
           <div className="flex items-center justify-center h-full">
             <p className="text-zinc-400 text-sm font-mono">
@@ -173,9 +173,15 @@ function page() {
             </p>
           </div>
         )}
+
         {messages.map((msg) => (
-          <div key={msg.id} className="flex flex-col items-start">
-            <div className="max-w-[80%] group">
+          <div
+            key={msg.id}
+            className={`flex ${
+              msg.sender === username ? "justify-end" : "justify-start"
+            }`}
+          >
+            <div className="max-w-[80%]">
               <div className="flex items-baseline gap-3 mb-1">
                 <span
                   className={`text-xs font-bold ${
@@ -190,45 +196,46 @@ function page() {
                 </span>
               </div>
 
-              <p className="text-sm text-zinc-300 whitespace-pre-wrap wrap-break-word leading-relaxed">
+              <p
+                className={`px-4 py-2 rounded-2xl text-sm leading-relaxed wrap-break-word max-w-full
+          ${
+            msg.sender === username
+              ? "bg-green-600/10 text-green-600 border border-green-500/30 shadow-[0_0_12px_rgba(34,197,94,0.15)]"
+              : "bg-blue-600/10 text-blue-600 border border-blue-500/30 shadow-[0_0_12px_rgba(59,130,246,0.15)]"
+          }`}
+              >
                 {msg.text}
               </p>
+
               <div ref={scrollRef} />
             </div>
           </div>
         ))}
       </div>
-      <div className="backdrop p-4 border-t border-zinc-800 bg-zinc-900/30">
-        <div className="flex gap-2">
-          <div className="flex-1 relative group">
+
+      <div className="fixed bottom-2 left-1/2 -translate-x-1/2 w-[95%] max-w-3xl">
+        <div className="flex items-center gap-3 px-3 py-2 rounded-full bg-zinc-950/70 shadow-2xl border border-zinc-800 backdrop-blur-xl backdrop">
+          <div className="flex-1 relative">
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-green-500 animate-pulse">
               {">"}
             </span>
+
             <input
               ref={inputRef}
-              autoFocus
-              type="text"
               value={input}
-              placeholder="Type message...."
               onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && input.trim()) {
-                  inputRef.current?.focus();
-                  sendMessage();
-                }
-              }}
-              className="w-full bg-black border border-zinc-800 focus:border-zinc-700 focus:outline-none transition-colors text-zinc-100 placeholder:text-zinc-700 py-3 pl-8 pr-4 text-sm rounded"
+              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+              placeholder="Type message..."
+              className="w-full bg-zinc-900/70 rounded-full py-3 pl-10 pr-4 text-sm text-zinc-100 placeholder:text-zinc-500 border border-zinc-800 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20 transition-all"
             />
           </div>
+
           <button
             disabled={!input.trim()}
-            onClick={() => {
-              sendMessage();
-              inputRef.current?.focus();
-            }}
-            className="bg-zinc-800 text-zinc-400 px-6 text-sm font-bold hover:text-zinc-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer rounded"
+            onClick={sendMessage}
+            className="h-11 w-11 flex items-center justify-center rounded-full bg-green-600 text-black font-bold hover:scale-110 active:scale-95 transition-all shadow-lg disabled:opacity-40"
           >
-            SEND
+            ➤
           </button>
         </div>
       </div>
