@@ -1,49 +1,53 @@
-import { NextRequest, NextResponse } from "next/server";
-import { nanoid } from "nanoid";
-import { redis } from "./lib/redis";
+import { NextRequest, NextResponse } from "next/server"
+import { redis } from "./lib/redis"
+import { nanoid } from "nanoid"
 
 export const proxy = async (req: NextRequest) => {
-  const pathname = req.nextUrl.pathname;
-  const match = pathname.match(/^\/room\/([^/]+)$/);
-  const roomID = match?.[1];
+  const pathname = req.nextUrl.pathname
 
-  if (!roomID) return NextResponse.redirect(new URL("/", req.url));
+  const roomMatch = pathname.match(/^\/room\/([^/]+)$/)
+  if (!roomMatch) return NextResponse.redirect(new URL("/", req.url))
 
-  const meta = await redis.hgetall(`meta:${roomID}`);
-  if (!meta) return NextResponse.redirect(new URL("/?error=room-not-found", req.url));
+  const roomId = roomMatch[1]
 
-  const token = req.cookies.get("x-auth-token")?.value;
+  const meta = await redis.hgetall<{ connected: string[]; createdAt: number }>(
+    `meta:${roomId}`
+  )
 
-  // check if token already connected
-  if (token && (await redis.sismember(`connected:${roomID}`, token))) {
-    return NextResponse.next();
+  if (!meta) {
+    return NextResponse.redirect(new URL("/?error=room-not-found", req.url))
   }
 
-  // generate new token
-  const newToken = nanoid();
+  const existingToken = req.cookies.get("x-auth-token")?.value
 
-  // atomically add token to the set
-  const added = await redis.sadd(`connected:${roomID}`, newToken);
-
-  const count = await redis.scard(`connected:${roomID}`);
-  if (count > 2) {
-    // room full → remove the token we just added
-    await redis.srem(`connected:${roomID}`, newToken);
-    return NextResponse.redirect(new URL("/?error=room-full", req.url));
+  // USER IS ALLOWED TO JOIN ROOM
+  if (existingToken && meta.connected.includes(existingToken)) {
+    return NextResponse.next()
   }
 
-  // set token cookie
-  const response = NextResponse.next();
-  response.cookies.set("x-auth-token", newToken, {
-    httpOnly: true,
+  // USER IS NOT ALLOWED TO JOIN
+  if (meta.connected.length >= 2) {
+    return NextResponse.redirect(new URL("/?error=room-full", req.url))
+  }
+
+  const response = NextResponse.next()
+
+  const token = nanoid()
+
+  response.cookies.set("x-auth-token", token, {
     path: "/",
-    sameSite: "strict",
+    httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-  });
+    sameSite: "strict",
+  })
 
-  return response;
-};
+  await redis.hset(`meta:${roomId}`, {
+    connected: [...meta.connected, token],
+  })
+
+  return response
+}
 
 export const config = {
   matcher: "/room/:path*",
-};
+}
