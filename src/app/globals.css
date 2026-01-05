@@ -24,3 +24,36 @@ body {
   color: var(--foreground);
   font-family: var(--font-jetbrains-mono);
 }
+
+@media (max-width: 650px) {
+  
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-jetbrains-mono);
+    background-image: url("/image.png");
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-size: cover;
+  }
+}
+
+/* @media (max-width: 650px) {
+
+  .background-image {
+    background-image: url("/image.png");
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-size: cover;
+    height: "100%";
+    width: "100%";
+  }
+
+} */
+
+.backdrop {
+  backdrop-filter: blur(10px);
+  background: rgba(10, 10, 10, 0.6);
+}

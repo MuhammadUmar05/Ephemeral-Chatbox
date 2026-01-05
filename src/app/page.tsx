@@ -58,12 +58,12 @@ function Lobby() {
           <h1 className="text-2xl font-bold tracking-tight text-green-500">
             {"> "}private_chat
           </h1>
-          <p className="text-zinc-500 text-sm">
+          <p className="text-zinc-500 text-sm font-bold">
             A private, self destructing chat room.
           </p>
         </div>
 
-        <div className="bg-zinc-900/50 p-6 backdrop-blur-md border border-zinc-800">
+        <div className="bg-zinc-900/50 p-6 backdrop-blur-md border border-zinc-800 backdrop">
           <div className="space-y-5">
             <div className="space-y-2">
               <label className="flex items-center text-zinc-500">

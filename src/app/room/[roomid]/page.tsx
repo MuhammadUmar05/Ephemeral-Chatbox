@@ -70,6 +70,7 @@ function page() {
     axios.delete(`/api/room/create?roomid=${roomID}`);
   };
 
+  const scrollRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     getMessages();
   }, []);
@@ -82,6 +83,10 @@ function page() {
       }
     })();
   }, []);
+
+  useEffect(() => {
+    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   useEffect(() => {
     if (timeRemaining === null || timeRemaining < 0) return;
@@ -118,8 +123,8 @@ function page() {
   });
 
   return (
-    <main className="flex flex-col h-screen max-h-screen overflow-hidden">
-      <header className="border-b border-zinc-800 p-4 flex items-center justify-between bg-zinc-900/30">
+    <main className="flex flex-col h-screen max-h-screen overflow-hidden background-image">
+      <header className="backdrop border-b border-zinc-800 p-4 flex items-center justify-between bg-zinc-900/30">
         <div className="flex items-center gap-4">
           <div className="flex flex-col">
             <p className="text-xs text-zinc-500 uppercase">ROOM ID</p>
@@ -157,13 +162,13 @@ function page() {
           onClick={destroyRoom}
           className="text-xs bg-zinc-800 hover:bg-red-600 px-3 py-1.5 rounded text-zinc-400 hover:text-white font-bold transition-all group flex items-center gap-2 disabled:opacity-50"
         >
-          <span className="group-hover:animate-pulse">💣</span> DESTRY NOW
+          <span className="group-hover:animate-pulse">💣</span> DESTROY NOW
         </button>
       </header>
       <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin">
         {messages.length === 0 && (
           <div className="flex items-center justify-center h-full">
-            <p className="text-zinc-600 text-sm font-mono">
+            <p className="text-zinc-400 text-sm font-mono">
               No messages yet, start the conversation
             </p>
           </div>
@@ -185,15 +190,16 @@ function page() {
                 </span>
               </div>
 
-              <p className="text-sm text-zinc-300 leading-relaxed break-all">
+              <p className="text-sm text-zinc-300 whitespace-pre-wrap wrap-break-word leading-relaxed">
                 {msg.text}
               </p>
+              <div ref={scrollRef} />
             </div>
           </div>
         ))}
       </div>
-      <div className="p-4 border-t border-zinc-800 bg-zinc-900/30">
-        <div className="flex gap-4">
+      <div className="backdrop p-4 border-t border-zinc-800 bg-zinc-900/30">
+        <div className="flex gap-2">
           <div className="flex-1 relative group">
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-green-500 animate-pulse">
               {">"}
