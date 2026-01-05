@@ -10,7 +10,7 @@ export const proxy = async (req: NextRequest) => {
 
   const roomId = roomMatch[1]
 
-  const meta = await redis.hgetall<{ connected: string[]; createdAt: number }>(
+  const meta = await redis.hgetall<{ connectedUsers: string[]; createdAt: number }>(
     `meta:${roomId}`
   )
 
@@ -21,12 +21,12 @@ export const proxy = async (req: NextRequest) => {
   const existingToken = req.cookies.get("x-auth-token")?.value
 
   // USER IS ALLOWED TO JOIN ROOM
-  if (existingToken && meta.connected.includes(existingToken)) {
+  if (existingToken && meta.connectedUsers.includes(existingToken)) {
     return NextResponse.next()
   }
 
   // USER IS NOT ALLOWED TO JOIN
-  if (meta.connected.length >= 2) {
+  if (meta.connectedUsers.length >= 2) {
     return NextResponse.redirect(new URL("/?error=room-full", req.url))
   }
 
@@ -42,7 +42,7 @@ export const proxy = async (req: NextRequest) => {
   })
 
   await redis.hset(`meta:${roomId}`, {
-    connected: [...meta.connected, token],
+    connectedUsers: [...meta.connectedUsers, token],
   })
 
   return response
